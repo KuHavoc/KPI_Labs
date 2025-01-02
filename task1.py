@@ -38,6 +38,7 @@ async def async_map(array: List[Any], callback: Callable[[Any], Any], debounce_d
     
     return results
 
+@debounce(0.1)
 async def is_even_slow(number: int) -> bool:
     await asyncio.sleep(0.05)
     return number % 2 == 0
@@ -45,28 +46,58 @@ async def is_even_slow(number: int) -> bool:
 async def is_even_fast(number: int) -> bool:
     return number % 2 == 0
 
+@debounce(0.1)
+async def multiply_by_two_slow(number: int) -> int:
+    await asyncio.sleep(0.05)
+    return number * 2
+
+async def multiply_by_two_fast(number: int) -> int:
+    return number * 2
+
 async def main():
     numbers = list(range(10))
     
-    print("--- Without Debounce ---")
+    print("--- async_filter without Debounce ---")
     start_time = time.time()
     even_numbers = await async_filter(numbers, is_even_slow)
     end_time = time.time()
     print(f"Even numbers: {even_numbers}")
     print(f"Time taken: {end_time - start_time:.4f} seconds")
 
-    print("\n--- With Debounce ---")
+    print("\n--- async_filter with Debounce ---")
     start_time = time.time()
     even_numbers_with_debounce = await async_filter(numbers, is_even_slow, debounce_delay=0.1)
     end_time = time.time()
     print(f"Even numbers (with debounce): {even_numbers_with_debounce}")
     print(f"Time taken (with debounce): {end_time - start_time:.4f} seconds")
     
-    print("\n--- With Debounce and Fast Callback ---")
+    print("\n--- async_filter With Debounce and Fast Callback ---")
     start_time = time.time()
     even_numbers_fast_with_debounce = await async_filter(numbers, is_even_fast, debounce_delay=0.1)
     end_time = time.time()
     print(f"Even numbers (with fast debounce): {even_numbers_fast_with_debounce}")
+    print(f"Time taken (with fast debounce): {end_time - start_time:.4f} seconds")
+    
+    
+    print("\n--- async_map without Debounce ---")
+    start_time = time.time()
+    mapped_numbers = await async_map(numbers, multiply_by_two_slow)
+    end_time = time.time()
+    print(f"Mapped numbers: {mapped_numbers}")
+    print(f"Time taken: {end_time - start_time:.4f} seconds")
+    
+    print("\n--- async_map with Debounce ---")
+    start_time = time.time()
+    mapped_numbers_with_debounce = await async_map(numbers, multiply_by_two_slow, debounce_delay=0.1)
+    end_time = time.time()
+    print(f"Mapped numbers (with debounce): {mapped_numbers_with_debounce}")
+    print(f"Time taken (with debounce): {end_time - start_time:.4f} seconds")
+    
+    print("\n--- async_map With Debounce and Fast Callback ---")
+    start_time = time.time()
+    mapped_numbers_fast_with_debounce = await async_map(numbers, multiply_by_two_fast, debounce_delay=0.1)
+    end_time = time.time()
+    print(f"Mapped numbers (with fast debounce): {mapped_numbers_fast_with_debounce}")
     print(f"Time taken (with fast debounce): {end_time - start_time:.4f} seconds")
 
 
