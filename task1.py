@@ -18,19 +18,25 @@ def debounce(delay: Optional[float] = None) -> Callable[[Callable[P, T]], Callab
     return decorator
 
 async def async_filter(array: List[Any], callback: Callable[[Any], bool], debounce_delay: Optional[float] = None) -> List[Any]:
+    @debounce(debounce_delay)
     async def _apply_callback(element):
-        start_time = asyncio.get_event_loop().time()
-        result = await callback(element)
-        end_time = asyncio.get_event_loop().time()
-        if debounce_delay and end_time - start_time < debounce_delay:
-            await asyncio.sleep(debounce_delay - (end_time - start_time))
-        if result:
+        if await callback(element):
           return element
     
     tasks = [asyncio.create_task(_apply_callback(element)) for element in array]
     results = await asyncio.gather(*tasks)
     
     return [result for result in results if result is not None]
+
+async def async_map(array: List[Any], callback: Callable[[Any], Any], debounce_delay: Optional[float] = None) -> List[Any]:
+    @debounce(debounce_delay)
+    async def _apply_callback(element):
+      return await callback(element)
+    
+    tasks = [asyncio.create_task(_apply_callback(element)) for element in array]
+    results = await asyncio.gather(*tasks)
+    
+    return results
 
 async def is_even_slow(number: int) -> bool:
     await asyncio.sleep(0.05)
