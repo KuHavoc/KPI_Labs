@@ -28,17 +28,20 @@ class Promise:
     async def await_result(self):
         return await self._future
 
+semaphore = asyncio.Semaphore(2)
+
+async def long_operation(task_id: int) -> str:
+    async with semaphore:
+      delay = random.randint(1, 5)
+      print(f"Task {task_id}: Starting (delay {delay}s)...")
+      await asyncio.sleep(delay)
+      result = f"Task {task_id}: Completed after {delay} seconds"
+      print(result)
+      return result
+
 def long_operation_promise(task_id: int) -> Promise:
     future = asyncio.ensure_future(long_operation(task_id))
     return Promise(future)
-
-async def long_operation(task_id: int) -> str:
-    delay = random.randint(1, 5)
-    print(f"Task {task_id}: Starting (delay {delay}s)...")
-    await asyncio.sleep(delay)
-    result = f"Task {task_id}: Completed after {delay} seconds"
-    print(result)
-    return result
 
 async def process_task(task_id: int):
     try:
@@ -48,18 +51,28 @@ async def process_task(task_id: int):
         return f"Error: {e}"
 
 async def main():
-    results_promise = await asyncio.gather(*[long_operation_promise(i).then(lambda result: f"Processed: {result}").await_result() for i in range(1,4)])
+    promise1 = long_operation_promise(1).then(lambda result: f"Processed: {result}")
+    promise2 = long_operation_promise(2).then(lambda result: result.upper())
+    promise3 = long_operation_promise(3).catch(lambda error: f"Error: {error}")
+
+    results_promise = await asyncio.gather(*[promise1.await_result(),
+                                     promise2.await_result(),
+                                     promise3.await_result()])
+
     results_async_await = await asyncio.gather(
         process_task(4),
         process_task(5),
         process_task(6),
     )
+
     print("All tasks completed using Promises.")
     for result in results_promise:
       print(result)
+
     print("All tasks completed using Async Await.")
     for result in results_async_await:
         print(result)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
