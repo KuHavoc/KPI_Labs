@@ -12,6 +12,9 @@ async def do_some_work(duration: int, cancel_event: asyncio.Future) -> str:
     except asyncio.CancelledError:
         print("Роботу скасовано ззовні.")
         raise
+    except Exception as e:
+        print(f"Помилка під час виконання роботи: {e}")
+        return None
 
 async def main():
     cancel_event = asyncio.Future()
@@ -20,9 +23,14 @@ async def main():
         await asyncio.sleep(2)  # Зачекати 2 секунди, потім скасувати
         cancel_event.set_result(True)
         result = await task
-        print(f"Отримано результат: {result}")
+        if result:
+            print(f"Отримано результат: {result}")
+        else:
+            print("Робота не повернула результат.")
     except asyncio.CancelledError:
         print("Роботу скасовано.")
+    except Exception as e:
+        print(f"Помилка під час виконання: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
